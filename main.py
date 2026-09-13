@@ -1,5 +1,6 @@
 import os
 import asyncio
+from aiohttp import web
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 
@@ -22,12 +23,24 @@ async def new_message_handler(event):
     except Exception as e:
         print(f"Error: {e}")
 
+async def handle_ping(request):
+    return web.Response(text="Bot is running!")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get('/', handle_ping)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = int(os.environ.get("PORT", 8080))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+
 async def main():
     await user_client.start()
     await bot_client.start(bot_token=BOT_TOKEN)
+    await start_web_server()
     print(">>> 24/7 ऑटोमेशन एक्टिव है! <<<")
     await user_client.run_until_disconnected()
 
 if __name__ == '__main__':
     asyncio.run(main())
-  
