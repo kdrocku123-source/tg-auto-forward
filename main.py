@@ -64,7 +64,7 @@ def parse_signal(text):
     pair_match = re.search(r'#?([A-Z]{6}|XAUUSD|GOLD)', text, re.IGNORECASE)
     if pair_match:
         found_pair = pair_match.group(1).upper()
-        data["pair"] = "XAUUSD (GOLD)" if "XAU" in found_pair or "GOLD" in found_pair else found_pair
+        data["pair"] = "XAUUSD (GOLD)" if ("XAU" in found_pair or "GOLD" in found_pair) else found_pair
         
     # एंट्री रेट
     entry_match = re.search(r'(?:BUY|SELL|@)\s*@?\s*([0-9]+(?:\.[0-9]+)?)', text, re.IGNORECASE)
@@ -85,80 +85,120 @@ def parse_signal(text):
         
     return data
 
-def generate_first_style_card(data):
-    """पहली इमेज स्टाइल वाला वीआईपी कार्ड जनरेट करना"""
+def generate_signal_card(data):
+    """BUY के लिए ग्रीन बैकग्राउंड और SELL के लिए लाइट रेड बैकग्राउंड वाला वीआईपी कार्ड"""
     is_sell = data["is_sell"]
-    accent_color = '#E74C3C' if is_sell else '#2ECC71'
-    header_title = "SELL SIGNAL ALERT" if is_sell else "BUY SIGNAL ALERT"
     
-    fig, ax = plt.subplots(figsize=(8, 8), dpi=160)
-    fig.patch.set_facecolor('#0B0E14')
-    ax.set_facecolor('#0B0E14')
+    if is_sell:
+        bg_main = '#FFEAEA'       # लाइट सॉफ्ट रेड
+        card_inner = '#FFF5F5'
+        border_color = '#E53E3E'  # रेड बॉर्डर
+        hdr_bg = '#FED7D7'
+        text_primary = '#9B1C1C'
+        pair_bg = '#FFF0F0'
+        pair_border = '#FEB2B2'
+        pair_txt = '#1A202C'
+        action_txt = '#E53E3E'
+        tp_bg = '#E6FFFA'
+        tp_border = '#81E6D9'
+        tp_label = '#234E52'
+        tp_val = '#276749'
+        sl_bg = '#FED7D7'
+        sl_border = '#FEB2B2'
+        sl_label = '#742A2A'
+        sl_val = '#C53030'
+        footer_sub = '#718096'
+        footer_link = '#C53030'
+        header_title = "SELL SIGNAL ALERT"
+    else:
+        bg_main = '#E6FFFA'       # ग्रीनिश/मिंट बैकग्राउंड
+        card_inner = '#F0FFF4'
+        border_color = '#38A169'  # ग्रीन बॉर्डर
+        hdr_bg = '#C6F6D5'
+        text_primary = '#22543D'
+        pair_bg = '#F0FFF4'
+        pair_border = '#9AE6B4'
+        pair_txt = '#1A202C'
+        action_txt = '#2F855A'
+        tp_bg = '#E6FFFA'
+        tp_border = '#81E6D9'
+        tp_label = '#234E52'
+        tp_val = '#22543D'
+        sl_bg = '#FED7D7'
+        sl_border = '#FEB2B2'
+        sl_label = '#742A2A'
+        sl_val = '#C53030'
+        footer_sub = '#718096'
+        footer_link = '#22543D'
+        header_title = "BUY SIGNAL ALERT"
 
-    # आउटर बॉर्डर बॉक्स
+    fig, ax = plt.subplots(figsize=(8, 8), dpi=160)
+    fig.patch.set_facecolor(bg_main)
+    ax.set_facecolor(bg_main)
+
+    # आउटर कार्ड बॉर्डर
     rect = patches.FancyBboxPatch(
         (0.05, 0.05), 0.9, 0.9,
         boxstyle="round,pad=0.03,rounding_size=0.04",
-        linewidth=2.5, edgecolor=accent_color, facecolor='#131722', zorder=1
+        linewidth=2.5, edgecolor=border_color, facecolor=card_inner, zorder=1
     )
     ax.add_patch(rect)
 
     # हेडर बॉक्स
-    hdr_bg = '#2A1215' if is_sell else '#0F2A1C'
     header_box = patches.FancyBboxPatch(
         (0.08, 0.78), 0.84, 0.12,
         boxstyle="round,pad=0.02,rounding_size=0.03",
-        linewidth=1, edgecolor=accent_color, facecolor=hdr_bg, zorder=2
+        linewidth=1.5, edgecolor=border_color, facecolor=hdr_bg, zorder=2
     )
     ax.add_patch(header_box)
 
-    ax.text(0.5, 0.85, header_title, color='#FF4B4B' if is_sell else '#2ECC71', fontsize=18, fontweight='heavy', ha='center', va='center', zorder=3)
-    ax.text(0.5, 0.805, "PIPS POWER OFFICIAL | VIP SETUP", color='#E0B853', fontsize=11, fontweight='bold', ha='center', va='center', zorder=3)
+    ax.text(0.5, 0.85, header_title, color=action_txt, fontsize=18, fontweight='heavy', ha='center', va='center', zorder=3)
+    ax.text(0.5, 0.805, "PIPS POWER OFFICIAL | VIP SETUP", color=text_primary, fontsize=11, fontweight='bold', ha='center', va='center', zorder=3)
 
     # पेयर & एक्शन बॉक्स
     pair_box = patches.FancyBboxPatch(
         (0.08, 0.63), 0.84, 0.11,
         boxstyle="round,pad=0.02,rounding_size=0.02",
-        linewidth=1, edgecolor='#3A3E4A', facecolor='#1A202C', zorder=2
+        linewidth=1, edgecolor=pair_border, facecolor=pair_bg, zorder=2
     )
     ax.add_patch(pair_box)
-    ax.text(0.12, 0.685, f"PAIR : {data['pair']}", color='#FFFFFF', fontsize=14, fontweight='bold', va='center', zorder=3)
-    ax.text(0.88, 0.685, data['entry'], color='#FF4B4B' if is_sell else '#2ECC71', fontsize=15, fontweight='heavy', ha='right', va='center', zorder=3)
+    ax.text(0.12, 0.685, f"PAIR : {data['pair']}", color=pair_txt, fontsize=14, fontweight='bold', va='center', zorder=3)
+    ax.text(0.88, 0.685, data['entry'], color=action_txt, fontsize=15, fontweight='heavy', ha='right', va='center', zorder=3)
 
-    # TP बॉक्सेस
+    # TP लेवल्स
     y_pos = 0.50
     for label, val in data['tps']:
         tp_box = patches.FancyBboxPatch(
             (0.08, y_pos - 0.02), 0.84, 0.075,
             boxstyle="round,pad=0.015,rounding_size=0.02",
-            linewidth=1, edgecolor='#1E3A2F', facecolor='#0D221A', zorder=2
+            linewidth=1, edgecolor=tp_border, facecolor=tp_bg, zorder=2
         )
         ax.add_patch(tp_box)
-        ax.text(0.12, y_pos + 0.018, f">>  {label}", color='#A0AEC0', fontsize=12, fontweight='bold', va='center', zorder=3)
-        ax.text(0.88, y_pos + 0.018, val, color='#00E676', fontsize=14, fontweight='heavy', ha='right', va='center', zorder=3)
+        ax.text(0.12, y_pos + 0.018, f">>  {label}", color=tp_label, fontsize=12, fontweight='bold', va='center', zorder=3)
+        ax.text(0.88, y_pos + 0.018, val, color=tp_val, fontsize=14, fontweight='heavy', ha='right', va='center', zorder=3)
         y_pos -= 0.095
 
-    # SL बॉक्स
+    # SL लेवल
     if data['sl']:
         sl_box = patches.FancyBboxPatch(
             (0.08, y_pos - 0.02), 0.84, 0.075,
             boxstyle="round,pad=0.015,rounding_size=0.02",
-            linewidth=1, edgecolor='#4A1C1C', facecolor='#251113', zorder=2
+            linewidth=1, edgecolor=sl_border, facecolor=sl_bg, zorder=2
         )
         ax.add_patch(sl_box)
-        ax.text(0.12, y_pos + 0.018, ">>  STOP LOSS (SL)", color='#A0AEC0', fontsize=12, fontweight='bold', va='center', zorder=3)
-        ax.text(0.88, y_pos + 0.018, data['sl'], color='#FF5252', fontsize=14, fontweight='heavy', ha='right', va='center', zorder=3)
+        ax.text(0.12, y_pos + 0.018, ">>  STOP LOSS (SL)", color=sl_label, fontsize=12, fontweight='bold', va='center', zorder=3)
+        ax.text(0.88, y_pos + 0.018, data['sl'], color=sl_val, fontsize=14, fontweight='heavy', ha='right', va='center', zorder=3)
 
     # फुटर
-    ax.text(0.5, 0.11, "Discipline & Risk Management Over Emotion", color='#718096', fontsize=10, style='italic', ha='center', va='center', zorder=3)
-    ax.text(0.5, 0.075, "Telegram: @pipspower1  |  For Educational Purposes", color='#F1C40F', fontsize=11, fontweight='bold', ha='center', va='center', zorder=3)
+    ax.text(0.5, 0.11, "Discipline & Risk Management Over Emotion", color=footer_sub, fontsize=10, style='italic', ha='center', va='center', zorder=3)
+    ax.text(0.5, 0.075, "Telegram: @pipspower1 | For Educational Purposes", color=footer_link, fontsize=11, fontweight='bold', ha='center', va='center', zorder=3)
 
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.axis('off')
 
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', dpi=160, bbox_inches='tight', facecolor='#0B0E14')
+    plt.savefig(buf, format='png', dpi=160, bbox_inches='tight', facecolor=bg_main)
     plt.close(fig)
     buf.seek(0)
     return buf
@@ -183,7 +223,7 @@ async def new_message_handler(event):
         cleaned = clean_text(raw_text)
         
         try:
-            # 1. चार्ट इमेज होने पर
+            # 1. चार्ट इमेज होने पर (टॉप 5% क्रॉप)
             if event.message.photo:
                 print("--> इमेज डाउनलोड हो रही है...")
                 path = await event.message.download_media()
@@ -205,16 +245,15 @@ async def new_message_handler(event):
             # 3. टेक्स्ट मैसेज
             else:
                 if is_trading_signal(cleaned):
-                    print("--> ट्रेडिंग सिग्नल मिला! पहली स्टाइल का वीआईपी कार्ड तैयार हो रहा है...")
+                    print("--> ट्रेडिंग सिग्नल मिला! लाइट-थीम वीआईपी कार्ड तैयार हो रहा है...")
                     parsed = parse_signal(cleaned)
-                    card_buf = generate_first_style_card(parsed)
+                    card_buf = generate_signal_card(parsed)
                     final_caption = cleaned + MY_SIGNATURE
                     
-                    # इमेज को फाइल नाम 'signal.png' देकर भेजें
                     card_buf.name = "signal.png"
                     await bot_client.send_file(TARGET_CHAT, file=card_buf, caption=final_caption, parse_mode='md')
                 else:
-                    # सामान्य टेक्स्ट (Now, Gold आदि) सीधे जाएँगे
+                    # सामान्य टेक्स्ट (Now, Gold आदि) बिना रुके सीधे पोस्ट होंगे
                     if cleaned:
                         await bot_client.send_message(TARGET_CHAT, cleaned, parse_mode='md')
 
